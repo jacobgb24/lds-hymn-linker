@@ -1,14 +1,24 @@
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    base: './',
+    plugins: [
+      {
+        name: 'copy-hymns-json',
+        closeBundle() {
+          const src = path.resolve(import.meta.dirname, 'src/data/hymns.json');
+          const dest = path.resolve(import.meta.dirname, 'dist/src/data/hymns.json');
+          fs.mkdirSync(path.dirname(dest), {recursive: true});
+          fs.copyFileSync(src, dest);
+        },
+      },
+    ],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(import.meta.dirname, '.'),
       },
     },
     server: {

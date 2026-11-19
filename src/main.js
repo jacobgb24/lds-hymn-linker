@@ -1,16 +1,3 @@
-import hymnsData from './data/hymns.json';
-
-interface Hymn {
-  number: string;
-  title: string;
-  url: string;
-}
-
-const HYMNS = hymnsData as Record<string, { title: string; url: string }>;
-const HYMN_LIST: Hymn[] = Object.entries(HYMNS)
-  .map(([number, entry]) => ({ number, ...entry }))
-  .sort((a, b) => Number(a.number) - Number(b.number));
-
 const CLIPBOARD_ICON = `
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
@@ -24,45 +11,44 @@ const CHECK_ICON = `
   </svg>
 `;
 
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const $ = (id) => document.getElementById(id);
 
-const inputWrapEl = $<HTMLDivElement>('input-wrap');
-const inputEl = $<HTMLInputElement>('hymn-input');
-const clearBtn = $<HTMLButtonElement>('clear-btn');
-const modeToggleBtn = $<HTMLButtonElement>('mode-toggle-btn');
-const suggestionsEl = $<HTMLUListElement>('suggestions');
-const resultBoxEl = $<HTMLDivElement>('result-box');
-const resultCollectionEl = $<HTMLSpanElement>('result-collection');
-const previewLinkEl = $<HTMLAnchorElement>('preview-link');
-const copyBtn = $<HTMLButtonElement>('copy-btn');
-const statusMsgEl = $<HTMLParagraphElement>('status-msg');
+const inputWrapEl = $('input-wrap');
+const inputEl = $('hymn-input');
+const clearBtn = $('clear-btn');
+const modeToggleBtn = $('mode-toggle-btn');
+const suggestionsEl = $('suggestions');
+const resultBoxEl = $('result-box');
+const resultCollectionEl = $('result-collection');
+const previewLinkEl = $('preview-link');
+const copyBtn = $('copy-btn');
+const statusMsgEl = $('status-msg');
 const historySectionEl = $('history-section');
-const historyListEl = $<HTMLUListElement>('history-list');
+const historyListEl = $('history-list');
 
 const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const numericPlaceholder = isDesktop ? '2 or The Spirit of God' : '2 or 1001';
-const history: Hymn[] = [];
-let currentHymn: Hymn | null = null;
+const history = [];
+
+let hymns = {};
+let hymnList = [];
+let currentHymn = null;
 
 inputEl.placeholder = numericPlaceholder;
 copyBtn.innerHTML = CLIPBOARD_ICON;
 
-const formatLabel = (hymn: Hymn) => `#${hymn.number} ${hymn.title}`;
-const getCollection = (num: string) =>
+const formatLabel = (hymn) => `#${hymn.number} ${hymn.title}`;
+const getCollection = (num) =>
   Number(num) <= 341 ? 'Hymns (1985)' : 'Hymns—For Home and Church';
 
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  className?: string,
-  text?: string
-): HTMLElementTagNameMap[K] {
+function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
 }
 
-function escapeHtml(text: string): string {
+function escapeHtml(text) {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -70,7 +56,7 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
-async function copyHymnLink(hymn: Hymn, sourceEl: HTMLElement = previewLinkEl): Promise<boolean> {
+async function copyHymnLink(hymn, sourceEl = previewLinkEl) {
   const label = formatLabel(hymn);
   const html = `<a href="${escapeHtml(hymn.url)}">${escapeHtml(label)}</a>`;
 
@@ -88,7 +74,7 @@ async function copyHymnLink(hymn: Hymn, sourceEl: HTMLElement = previewLinkEl): 
     }
   }
 
-  const onCopy = (e: ClipboardEvent) => {
+  const onCopy = (e) => {
     if (e.clipboardData) {
       e.clipboardData.setData('text/html', html);
       e.clipboardData.setData('text/plain', label);
@@ -111,13 +97,13 @@ async function copyHymnLink(hymn: Hymn, sourceEl: HTMLElement = previewLinkEl): 
   return ok;
 }
 
-function setStatus(text = '', type?: 'success' | 'error') {
+function setStatus(text = '', type) {
   statusMsgEl.textContent = text;
   statusMsgEl.className = type ? `status-msg is-${type}` : 'status-msg';
   statusMsgEl.hidden = !text;
 }
 
-function flashCopiedIcon(btn: HTMLButtonElement) {
+function flashCopiedIcon(btn) {
   btn.innerHTML = CHECK_ICON;
   btn.classList.add('is-copied');
   window.setTimeout(() => {
@@ -154,9 +140,9 @@ function renderHistory() {
   );
 }
 
-function renderSuggestions(query: string) {
+function renderSuggestions(query) {
   const q = query.toLowerCase();
-  const matches = HYMN_LIST.filter((h) => h.title.toLowerCase().includes(q)).slice(0, 6);
+  const matches = hymnList.filter((h) => h.title.toLowerCase().includes(q)).slice(0, 6);
 
   if (matches.length === 0) {
     suggestionsEl.replaceChildren();
@@ -205,10 +191,14 @@ function updateLookup(keepStatus = false) {
     return;
   }
 
+  if (hymnList.length === 0) {
+    return;
+  }
+
   if (/^\d+$/.test(normalized)) {
     suggestionsEl.hidden = true;
     const key = String(parseInt(normalized, 10));
-    const match = HYMNS[key];
+    const match = hymns[key];
 
     if (match) {
       currentHymn = { number: key, ...match };
@@ -282,3 +272,21 @@ modeToggleBtn.addEventListener('click', () => {
   inputEl.blur();
   inputEl.focus();
 });
+
+async function loadHymns() {
+  try {
+    const res = await fetch('./src/data/hymns.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    hymns = await res.json();
+    hymnList = Object.entries(hymns)
+      .map(([number, entry]) => ({ number, ...entry }))
+      .sort((a, b) => Number(a.number) - Number(b.number));
+    if (inputEl.value.trim()) {
+      updateLookup();
+    }
+  } catch {
+    setStatus('Could not load hymn data.', 'error');
+  }
+}
+
+void loadHymns();
