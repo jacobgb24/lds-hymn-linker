@@ -1,0 +1,6 @@
+{
+  "name": "LDS Hymn Linker",
+  "description": "Convert LDS hymn numbers into ready-to-paste Google Docs hyperlinks pointing directly to churchofjesuschrist.org.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

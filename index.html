@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LDS Hymn Linker</title>
+    <meta name="description" content="Convert LDS hymn numbers into ready-to-paste Google Docs hyperlinks pointing directly to churchofjesuschrist.org." />
+    <meta property="og:title" content="LDS Hymn Linker" />
+    <meta property="og:description" content="Convert LDS hymn numbers into ready-to-paste Google Docs hyperlinks pointing directly to churchofjesuschrist.org." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/index.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <h1>LDS Hymn Linker</h1>
+        <p class="subtitle">
+          Enter a hymn number or title to generate a formatted link for use in Google Docs.
+        </p>
+      </header>
+
+      <section class="card" aria-label="Hymn link converter">
+        <div class="field-header">
+          <label for="hymn-input">Hymn Number or Title</label>
+          <span class="range-hint">1–341 · 1001–1078 · 1201–1212</span>
+        </div>
+
+        <div class="input-row">
+          <div id="input-wrap" class="input-wrap">
+            <span class="input-prefix" aria-hidden="true">#</span>
+            <input
+              id="hymn-input"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              autofocus
+              placeholder="2 or 1001"
+            />
+            <button
+              id="clear-btn"
+              type="button"
+              class="clear-btn"
+              aria-label="Clear input"
+              hidden
+            >
+              ×
+            </button>
+          </div>
+          <button
+            id="mode-toggle-btn"
+            type="button"
+            class="mode-toggle-btn"
+            aria-pressed="false"
+            aria-label="Switch to text keyboard for title search"
+            title="Switch to text keyboard"
+          >
+            Abc
+          </button>
+        </div>
+
+        <ul id="suggestions" class="suggestions" aria-label="Matching hymns" hidden></ul>
+
+        <div id="result-box" class="result-box" hidden>
+          <div class="result-meta">
+            <span>Preview</span>
+            <span id="result-collection"></span>
+          </div>
+          <div class="result-row">
+            <a
+              id="preview-link"
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="preview-link"
+            ></a>
+            <button
+              id="copy-btn"
+              type="button"
+              class="icon-copy-btn"
+              aria-label="Copy hyperlink to clipboard"
+              title="Copy to clipboard"
+            ></button>
+          </div>
+        </div>
+
+        <p id="status-msg" class="status-msg" role="status" aria-live="polite" hidden></p>
+      </section>
+
+      <section id="history-section" class="history-section" aria-label="Lookup history" hidden>
+        <h2 class="history-title">History</h2>
+        <ul id="history-list" class="history-list"></ul>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
